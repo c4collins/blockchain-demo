@@ -1,12 +1,14 @@
-import time
-import json
+# Standard Library
 import hashlib
+import json
+import time
 import urllib.parse
-
+# Third-Party
 import requests
+# Project
+from components.block import Block
+from components.transaction import Transaction
 
-from block import Block
-from transaction import Transaction
 
 class Chain:
     def __init__(self):
@@ -28,11 +30,11 @@ class Chain:
         """
 
         block = Block(
-            index = len(self.chain) + 1,
-            timestamp = time.time(),
-            transactions = self.current_transactions,
-            proof = proof,
-            previous_hash = previous_hash or self.hash(self.chain[-1]),
+            index=len(self.chain) + 1,
+            timestamp=time.time(),
+            transactions=self.current_transactions,
+            proof=proof,
+            previous_hash=previous_hash or self.hash(self.chain[-1]),
         )
 
         self.current_transactions = []
@@ -111,9 +113,9 @@ class Chain:
         :rtype: bool
         """
 
-        guess = f'{last_proof}{proof}'.encode()
+        guess = '{}{}'.format(last_proof, proof).encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
-        return guess_hash[:4] == "00000"
+        return guess_hash[:4] == "0000"
 
     # Nodes
     def register_node(self, address):
@@ -128,12 +130,13 @@ class Chain:
         parsed_url = urllib.parse.urlparse(address)
         self.nodes.add(parsed_url.path)
 
-
     def valid_chain(self, chain, verbose=False):
         """
         Determine if a given blockchain is valid
         :param chain: Chain.chain
         :type chain: list
+        :param verbose: prints out more info
+        : type verbose: bool
         :return:  True if valid, else False
         :rtype: bool
         """
@@ -145,12 +148,12 @@ class Chain:
             block = chain[current_index]
 
             if verbose:
-                print(f'{last_block}')
-                print(f'{block}')
+                print('{}'.format(last_block))
+                print('{}'.format(block))
                 print("\n------------\n")
 
             # Check that the hash of the last block is correct
-            if block['previous_hash'] != self.hash(last_block):
+            if block.previous_hash != self.hash(last_block):
                 return False
 
             last_block = block
@@ -160,16 +163,19 @@ class Chain:
 
     def resolve_conflicts(self):
         """
-        This is the Consensus Algorithm - it resolves conflicts by replacing our chain with the longest one in the network.
+        This is the Consensus Algorithm -
+        it resolves conflicts by replacing our chain with the longest one in the network.
         :return: True if chain was replaced, else False
         :rtype: bool
         """
 
         new_chain = None
-        max_length = len(self.chain) # Only look for a chain longer than your own
+        max_length = len(self.chain)  # Only look for a chain longer than your own
 
         for node in self.nodes:
-            response = requests.get(f'http://{node}/chain')
+            response = requests.get(
+                'http://{}/chain'.format(node)
+            )
 
             if response.status_code == 200:
                 resp_json = response.json()

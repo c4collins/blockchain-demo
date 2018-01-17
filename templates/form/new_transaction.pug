@@ -1,0 +1,28 @@
+//-
+   Created by connorcollins on 2018-01-17.
+
+extends ../core/base
+
+block main_content
+  form(method="POST" target="{{ url_for('new_transaction') }}")
+    .field
+      label-label To
+      .control
+        input.input(name="to" type="text" placeholder="Recipient Address")
+
+    .field
+      label-label From
+      .control
+        input.input(name="from" type="text" placeholder="Sender Address")
+
+    .field
+      label-label Amount
+      .control
+        input.input(name="amount" type="text" placeholder="Transaction Amount")
+
+    div.field.is-grouped
+      div.control
+        button.button.is-link Submit
+      div.control
+        button.button.is-text(type="reset") Cancel
+

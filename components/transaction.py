@@ -1,4 +1,7 @@
+# Standard Library
 import json
+
+
 class Transaction:
     def __init__(self, sender, recipient, amount):
         self.sender = sender
@@ -11,5 +14,6 @@ class Transaction:
             'recipient': self.recipient,
             'amount': self.amount
         }
+
     def __str__(self):
         return json.dumps(self.json()).encode()

@@ -1,4 +1,7 @@
+# Standard Library
 import json
+
+
 class Block:
     def __init__(self, index, timestamp, transactions, proof, previous_hash):
         self.index = index
@@ -15,5 +18,6 @@ class Block:
             'previous_hash': self.previous_hash,
             'transactions': [transaction.json() for transaction in self.transactions],
         }
+
     def __str__(self):
         return json.dumps(self.json()).encode()

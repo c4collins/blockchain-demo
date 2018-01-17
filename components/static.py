@@ -1,0 +1,1 @@
+VERSION = b"\x00"

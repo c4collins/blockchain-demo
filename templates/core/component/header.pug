@@ -1,0 +1,9 @@
+//-
+   Created by connorcollins on 2018-01-17.
+
+nav.navbar(role="navigation" aria-label="main navigation")
+  .navbar-brand
+    a.navbar-item(href="{{ url_for('index') }}")
+      img(src="/images/circle.png")
+
+    h2.navbar-item.title.is-2 {{ coin_name }}

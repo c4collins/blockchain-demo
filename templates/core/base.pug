@@ -1,0 +1,19 @@
+//-
+   Created by connorcollins on 2018-01-17.
+
+doctype
+html
+  head
+    include component/html_head
+
+  body
+    .container
+      include component/header
+
+      .columns
+        .column.is-narrow
+          include component/navigation
+        .column
+          block main_content
+
+      include component/footer

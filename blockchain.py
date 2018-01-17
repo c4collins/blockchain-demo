@@ -1,17 +1,18 @@
-import hashlib
-import json
-import textwrap
-import time
-import uuid
+# Standard Library
 
-from flask import Flask, jsonify, request
-
-from chain import Chain
-from block import Block
+# Third-Party
+from flask import Flask, jsonify, request, render_template, send_from_directory
+# Helpers
+# Project
+from components.block import Block
+from components.chain import Chain
+from components.address import Address
 
 app = Flask(__name__)
-node_id = str(uuid.uuid4()).replace('-', '')
+main_address = Address()
+node_id = main_address.address
 blockchain = Chain()
+
 
 @app.route('/mine', methods=['GET'])
 def mine():
@@ -40,17 +41,35 @@ def mine():
     }
     return jsonify(response), 200
 
-@app.route('/transactions/new', methods=['POST'])
+
+@app.route('/transactions/new', methods=['GET', 'POST'])
 def new_transaction():
-    values = request.get_json(force=True)
-    required_fields = ['sender', 'recipient', 'amount']
+    if request.method == "POST":
+        try:
+            values = request.get_json(force=True) # API
+        except:
+            values = {
+                'sender': request.form['from'],
+                'recipient': request.form['to'],
+                'amount': request.form['amount']
+            } # Website Form
 
-    if not all(k in values for k in required_fields):
-        return 'Missing values', 400
+        required_fields = ['sender', 'recipient', 'amount']
 
-    index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
-    response = {'message': f'Transaction will be added to Block {index}'}
-    return jsonify(response), 200
+        if not all(k in values for k in required_fields):
+            return 'Missing values', 400
+
+        # TODO: Verify addresses
+        # TODO: Verify sender has enough balance
+        # TODO: Add transaction fees?
+        # TODO: Verify amount is possible (not enough info yet)
+
+        block_index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
+        response = {'message': 'Transaction will be added to Block {}'.format(block_index)}
+        return jsonify(response), 200
+
+    else:
+        return render_template('form/new_transaction.html')
 
 
 @app.route('/chain', methods=['GET'])
@@ -76,11 +95,14 @@ def register_nodes():
         blockchain.register_node(node)
 
     response = {
-        'message': f'{len(list(blockchain.nodes)) - start_node_count} New nodes have been added',
+        'message': '{} New nodes have been added'.format(
+            len(list(blockchain.nodes)) - start_node_count
+        ),
         'total_nodes': list(blockchain.nodes)
     }
 
     return jsonify(response), 201
+
 
 @app.route('/nodes/resolve', methods=['GET'])
 def resolve_conflicts():
@@ -99,9 +121,34 @@ def resolve_conflicts():
     return jsonify(response), 200
 
 
+@app.route('/')
+def index():
+    return render_template('page/home.html')
 
 
+# STATIC FILES START ##
+@app.route('/css/<path:path>')
+def send_css(path):
+    return send_from_directory('staticfiles/styles', path)
 
+
+@app.route('/js/<path:path>')
+def send_js(path):
+    return send_from_directory('staticfiles/scripts', path)
+
+
+@app.route('/images/<path:path>')
+def send_images(path):
+    return send_from_directory('staticfiles/images', path)
+# END STATIC FILES ##
+
+# CONTEXT PROCESSORS START ##
+@app.context_processor
+def inject_globals():
+    return dict(
+        coin_name = "KhanCoin",
+    )
+# END CONTEXT PROCESSORS ##
 
 if __name__ == '__main__':
-    app.run('0.0.0.0', port=5000)
+    app.run('0.0.0.0', port=5000, debug=True)

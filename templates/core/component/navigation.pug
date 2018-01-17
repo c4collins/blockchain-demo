@@ -1,0 +1,17 @@
+//-
+   Created by connorcollins on 2018-01-17.
+aside.menu
+  p.menu-label Data
+  ul.menu-list
+    li
+      a(href="{{ url_for('full_chain') }}") Full Chain
+  p.menu-label Actions
+  ul.menu-list
+    li
+      a(href="{{ url_for('mine') }}") Mine
+    li
+      a(href="{{ url_for('new_transaction') }}") New Transaction
+    li
+      a(href="{{ url_for('register_nodes') }}") Register Nodes
+    li
+      a(href="{{ url_for('resolve_conflicts') }}") Resolve Conflicts
