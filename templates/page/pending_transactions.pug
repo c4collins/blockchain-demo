@@ -1,0 +1,34 @@
+//-
+   Created by connorcollins on 2018-01-17.
+
+extends ../core/base
+
+block main_content
+  include ../core/component/notification
+
+  .container
+    h1.heading {{ data['length'] }} Pending Transactions
+    table.table
+      thead.thead
+        tr.tr
+          th.th.is-capitalized Recipient
+          th.th.is-capitalized Sender
+          th.th.is-capitalized Amount
+          th.th.is-capitalized Timestamp
+
+      tfoot.tfoot
+        tr.tr
+          th.th.is-capitalized Recipient
+          th.th.is-capitalized Sender
+          th.th.is-capitalized Amount
+          th.th.is-capitalized Timestamp
+
+      tbody.tbody
+        |{% for transaction in data['transactions'] %}
+        tr.tr
+          td.td {{ transaction['recipient'] }}
+          td.td {{ transaction['sender'] }}
+          td.td {{ transaction['amount'] }}
+          td.td {{ transaction['initiation_timestamp'] }}
+        |{% endfor %}
+

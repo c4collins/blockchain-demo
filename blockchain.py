@@ -1,7 +1,7 @@
 # Standard Library
 
 # Third-Party
-from flask import Flask, jsonify, request, render_template, send_from_directory
+from flask import Flask, jsonify, request, render_template, send_from_directory, url_for, redirect
 # Helpers
 # Project
 from components.block import Block
@@ -11,35 +11,46 @@ from components.address import Address
 app = Flask(__name__)
 main_address = Address()
 node_id = main_address.address
-blockchain = Chain()
+print(node_id)
+blockchain = Chain(node_id) # TODO: make address configurable instead of always using node_id
 
 
-@app.route('/mine', methods=['GET'])
+@app.route('/mine', methods=['GET', 'POST'])
 def mine():
-    # 1. Calculate PoW
-    last_block = blockchain.last_block
-    last_proof = last_block['proof']
-    proof = blockchain.proof_of_work(last_proof)
+    if request.method == "POST":
+        # 1. Calculate PoW
+        last_block = blockchain.last_block
+        last_proof = last_block.proof
+        proof = blockchain.proof_of_work(last_proof)
 
-    # 2. Reward Miner
-    blockchain.new_transaction(
-        sender="mining_reward_generator",
-        recipient=node_id,
-        amount=1
-    )
+        # 2. Reward Miner
+        blockchain.new_transaction(
+            sender="mining_reward_generator",
+            recipient=node_id,
+            amount=1
+        )
 
-    # 3. Add Block to Chain
-    previous_hash = blockchain.hash(last_block)
-    block = blockchain.new_block(proof, previous_hash)
+        # 3. Add Block to Chain
+        previous_hash = blockchain.hash(last_block)
+        # TODO: Make the address configurable rather than always the node_id
+        block = blockchain.new_block(previous_hash=previous_hash, proof=proof, address=node_id)
 
-    response = {
-        'message': 'New block forged',
-        'index': block.index,
-        'transactions': [transaction.json() for transaction in block.transactions],
-        'proof': block.proof,
-        'previous_hash': block.previous_hash
-    }
-    return jsonify(response), 200
+        response = {
+            'message': 'New block forged',
+            'index': block.index,
+            'transactions': [transaction.json() for transaction in block.transactions],
+            'proof': block.proof,
+            'previous_hash': block.previous_hash
+        }
+
+        response = __full_chain_data()
+        response['message'] = 'New block mined!'
+        return render_template('page/full_chain.html', data=response)
+
+    else:
+        # show button
+        return render_template('page/initiate_mining.html')
+
 
 
 @app.route('/transactions/new', methods=['GET', 'POST'])
@@ -62,24 +73,38 @@ def new_transaction():
         # TODO: Verify addresses
         # TODO: Verify sender has enough balance
         # TODO: Add transaction fees?
-        # TODO: Verify amount is possible (not enough info yet)
+        # TODO: Verify amount is possible (not enough info yet on possible amounts)
 
-        block_index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
-        response = {'message': 'Transaction will be added to Block {}'.format(block_index)}
-        return jsonify(response), 200
+        blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
+        response = __pending_transaction_data()
+
+        response['message'] = "Transaction Added"
+
+        return render_template('page/pending_transactions.html', data=response)
 
     else:
         return render_template('form/new_transaction.html')
 
+def __pending_transaction_data():
+    return {
+        'transactions': list(reversed([transaction.json() for transaction in blockchain.current_transactions])),
+        'length': len(blockchain.current_transactions)
+    }
+@app.route('/transactions', methods=['GET'])
+def pending_transactions():
+    response = __pending_transaction_data()
+    return render_template('page/pending_transactions.html', data=response)
 
-@app.route('/chain', methods=['GET'])
-def full_chain():
 
-    response = {
-        'chain': [block.json() if type(block) == Block else block for block in blockchain.chain],
+def __full_chain_data():
+    return {
+        'chain': list(reversed([block.json() if type(block) == Block else block for block in blockchain.chain])),
         'length': len(blockchain.chain)
     }
-    return jsonify(response), 200
+@app.route('/chain', methods=['GET'])
+def full_chain():
+    response = __full_chain_data()
+    return render_template('page/full_chain.html', data=response)
 
 
 @app.route('/nodes/register', methods=['POST'])
@@ -107,18 +132,15 @@ def register_nodes():
 @app.route('/nodes/resolve', methods=['GET'])
 def resolve_conflicts():
     replaced = blockchain.resolve_conflicts()
-    if replaced:
-        response = {
-            'message': 'My chain was replaced',
-            'chain': blockchain.chain
-        }
-    else:
-        response = {
-            'message': 'My chain is authoritative',
-            'chain': blockchain.chain
-        }
-
-    return jsonify(response), 200
+    response = {
+        'chain': {
+            'length': len(blockchain.chain),
+            'num_of_transactions': sum([len(block.transactions) for block in blockchain.chain]),
+            'last_id': blockchain.last_block.index
+        },
+        'message': 'My chain was replaced' if replaced else 'My chain is authoritative',
+    }
+    return render_template('page/conflict_resolution.html', data=response)
 
 
 @app.route('/')

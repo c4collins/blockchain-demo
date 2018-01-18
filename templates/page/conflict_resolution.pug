@@ -1,0 +1,9 @@
+//-
+   Created by connorcollins on 2018-01-18.
+
+extends ../core/base
+
+block main_content
+  h4.is-size-4 {{ data['message'] }}!
+  p This chain has {{ data['chain']['num_of_transactions'] }} transactions in {{ data['chain']['length'] }} blocks.
+  p The last block mined was {{ data['chain']['last_id'] }}.

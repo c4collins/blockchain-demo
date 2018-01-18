@@ -11,22 +11,16 @@ from components.transaction import Transaction
 
 
 class Chain:
-    def __init__(self):
+    def __init__(self, address):
         self.chain = []
         self.current_transactions = []
-        self.new_block(previous_hash="1", proof=100)
+        self.new_block(proof=100, address=address, previous_hash="1")
         self.nodes = set()
 
     # Components
-    def new_block(self, proof, previous_hash=None):
+    def new_block(self, proof, address, previous_hash=None):
         """
         Create a new Block in the Blockchain
-        :param proof: The proof given by the PoW algorithm
-        :type proof: int
-        :param previous_hash: Hash of previous Block (optional)
-        :type previous_hash: str
-        :return: New Block
-        :rtype: Block
         """
 
         block = Block(
@@ -35,6 +29,7 @@ class Chain:
             transactions=self.current_transactions,
             proof=proof,
             previous_hash=previous_hash or self.hash(self.chain[-1]),
+            miner_address=address,
         )
 
         self.current_transactions = []
@@ -44,14 +39,6 @@ class Chain:
     def new_transaction(self, sender, recipient, amount):
         """
         Creates a new transaction to go into the next mined Block
-        :param sender: Address of the sender
-        :type sender: str
-        :param recipient: Address of the recipient
-        :type recipient: str
-        :param amount: Amount to transfer from sender to recipient
-        :type amount: int
-        :return: The index of the block that will hold this transaction
-        :rtype: int
         """
         transaction = Transaction(
             sender=sender,
@@ -71,10 +58,6 @@ class Chain:
     def hash(block):
         """
         Creates a SHA-256 hash of a block
-        :param block: Block
-        :type block: Block
-        :return: Hash of Block
-        :rtype: str
         """
 
         # We must make sure the object is consistent or the hashes will be inconsistent
@@ -90,11 +73,6 @@ class Chain:
         Simple PoW algorithm:
         - Find a number 'p such that hash(pp') contains rome number of leading 0s, where p is the old p'
         - p is the previous proof, and p' is the new proof
-
-        :param last_proof: Last block's proof
-        :type last_proof: int
-        :return: new Proof
-        :rtype: int
         """
 
         proof = 0
@@ -105,12 +83,6 @@ class Chain:
     def valid_proof(last_proof, proof):
         """
         Validates the proof: Does proof(last_proof, proof) contain a number of leading 0s?
-        :param last_proof: Previous Proof
-        :type last_proof: int
-        :param proof: Current Proof
-        :type proof: int
-        :return: True if valid, False if invalid
-        :rtype: bool
         """
 
         guess = '{}{}'.format(last_proof, proof).encode()
@@ -121,10 +93,6 @@ class Chain:
     def register_node(self, address):
         """
         Add new node to list of nodes
-        :param address: Address of node e.g. "http://192.168.0.1:5000"
-        :type address: str
-        :return: None
-        :rtype: None
         """
 
         parsed_url = urllib.parse.urlparse(address)
@@ -133,12 +101,6 @@ class Chain:
     def valid_chain(self, chain, verbose=False):
         """
         Determine if a given blockchain is valid
-        :param chain: Chain.chain
-        :type chain: list
-        :param verbose: prints out more info
-        : type verbose: bool
-        :return:  True if valid, else False
-        :rtype: bool
         """
 
         last_block = chain[0]
@@ -165,8 +127,6 @@ class Chain:
         """
         This is the Consensus Algorithm -
         it resolves conflicts by replacing our chain with the longest one in the network.
-        :return: True if chain was replaced, else False
-        :rtype: bool
         """
 
         new_chain = None

@@ -1,0 +1,29 @@
+//-
+   Created by connorcollins on 2018-01-17.
+
+extends ../core/base
+
+block main_content
+
+  include ../core/component/notification
+
+  .container
+    h1.heading {{ data['length'] }} Mined Blocks
+    table.table
+      thead.thead
+        tr.tr
+          th.th.is-capitalized Index
+          th.th.is-capitalized Timestamp
+          th.th.is-capitalized Transactions
+          th.th.is-capitalized Miner address
+
+      tfoot.tfoot
+      tbody.tbody
+        |{% for block in data['chain'] %}
+        tr.tr
+          td.td {{ block['index'] }}
+          td.td.has-text-weight-light {{ block['timestamp'] }}
+          td.td {{ block['num_transactions'] }}
+          td.td.is-size-7 {{ block['miner_address'] }}
+        |{% endfor %}
+

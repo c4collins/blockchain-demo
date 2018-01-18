@@ -8,10 +8,15 @@ from components import static
 # Project
 
 class Address:
-    def __init__(self):
+    def __init__(self, private_key=None):
         self.signing_key, self.private_key = None, None
         self.verifying_key, self.public_key = None, None
         self.address, self.balance = None, None
+
+        if private_key is not None:
+            self.import_address(private_key)
+        else:
+            self.new_address()
 
     def __repr__(self):
         return self.address
